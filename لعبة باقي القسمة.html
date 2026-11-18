@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لعبة باقي القسمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Readex+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a graph-paper notebook page; sticker-style panels with thick ink outlines, one friendly cookie guide who talks in a speech bubble. */
+:root{
+  --paper:#F3F7FC; --grid:#D8E3F1; --ink:#2A2250; --ink2:#5A5580;
+  --grape:#6B3FA0; --grape-l:#EBE0FB;
+  --mint:#38D39F; --mint-l:#D7F6E9;
+  --sun:#FFC63D; --sun-l:#FFF2CC;
+  --coral:#FF7A6B; --coral-l:#FFE1DC;
+  --sky-l:#DDEBFB;
+  --cookie:#DD9A50; --choc:#5A3318;
+  --f-display:'Baloo Bhaijaan 2','Lalezar','Cairo','Segoe UI',Tahoma,sans-serif;
+  --f-body:'Readex Pro','Cairo','Segoe UI',Tahoma,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.7;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+  min-height:100%;
+}
+button{font-family:inherit; color:inherit}
+[hidden]{display:none !important}
+.app{max-width:780px; margin:0 auto; padding:0 16px 32px}
+
+/* header */
+.top{position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:10px; padding:10px 0; background:var(--paper); border-bottom:3px dashed var(--ink)}
+.brand{font-family:var(--f-display); font-weight:800; font-size:20px; color:var(--grape); white-space:nowrap}
+.dots{display:flex; gap:8px; margin-inline-start:auto}
+.dot{width:38px; height:38px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-family:var(--f-display); font-weight:800; font-size:18px; cursor:pointer; padding:0; line-height:1}
+.dot.cur{background:var(--sun); transform:scale(1.12)}
+.dot.done{background:var(--mint)}
+.dot:disabled{opacity:.4; cursor:default}
+.iconbtn{border:3px solid var(--ink); background:#fff; border-radius:12px; min-width:40px; height:40px; cursor:pointer; display:grid; place-items:center; padding:0 8px; font-size:14px}
+.iconbtn svg{width:22px; height:22px}
+.iconbtn[aria-pressed="false"]{opacity:.55}
+:focus-visible{outline:4px solid var(--grape); outline-offset:2px}
+
+/* guide */
+.guide{display:flex; align-items:flex-end; gap:16px; margin:16px 0 18px; scroll-margin-top:70px}
+.mascot{width:92px; flex:none; overflow:visible}
+.mascot .m-wow,.mascot .m-think,.mascot .brow{display:none}
+.mascot.wow .m-happy,.mascot.think .m-happy{display:none}
+.mascot.wow .m-wow{display:block}
+.mascot.think .m-think,.mascot.think .brow{display:block}
+.mascot{animation:bob 3s ease-in-out infinite}
+.bubble{position:relative; flex:1; background:#fff; border:3px solid var(--ink); border-radius:22px; padding:12px 16px 12px; font-size:18px; box-shadow:0 5px 0 var(--ink)}
+.bubble::before{content:""; position:absolute; right:-10px; bottom:26px; width:16px; height:16px; background:#fff; border:3px solid var(--ink); border-width:3px 3px 0 0; transform:rotate(45deg)}
+.bubble.pop{animation:pop .35s ease-out}
+.bubble b{color:var(--grape)}
+.bubble .speak{margin-top:6px; height:34px; font-size:14px; gap:6px; display:inline-flex; align-items:center; background:var(--sky-l)}
+.bubble .speak svg{width:18px; height:18px}
+
+/* panels, buttons */
+.stage{display:flex; flex-direction:column; gap:16px}
+.panel{background:#fff; border:3px solid var(--ink); border-radius:22px; padding:16px; box-shadow:0 5px 0 var(--ink)}
+.st-title{margin:0; font-family:var(--f-display); font-weight:800; font-size:26px; line-height:1.3; text-wrap:balance}
+.st-title small{display:inline-block; margin-inline-end:8px; padding:0 12px; border:3px solid var(--ink); border-radius:12px; background:var(--grape); color:#fff; font-size:16px; vertical-align:middle}
+.btn{font-family:var(--f-display); font-weight:700; font-size:21px; line-height:1.3; padding:10px 22px; min-height:54px; border-radius:16px; border:3px solid var(--ink); background:var(--sun); color:var(--ink); box-shadow:0 5px 0 var(--ink); cursor:pointer}
+.btn:active:not(:disabled){transform:translateY(4px); box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{background:#E7E4F0; color:#7C779B; border-color:#8D88AA; box-shadow:0 3px 0 #8D88AA; cursor:not-allowed}
+.btn.go{background:var(--mint)}
+.btn.go.ready{animation:pulse 1.2s ease-in-out infinite}
+.btn.ghost{background:#fff}
+.actions{display:flex; justify-content:center; gap:12px; flex-wrap:wrap}
+.foot{display:flex; justify-content:space-between; gap:12px; margin-top:22px}
+.foot[hidden]{display:none}
+.note{margin:8px 0 0; text-align:center; font-size:17px; color:var(--ink2)}
+.center{text-align:center}
+.lab{font-size:16px; color:var(--ink2)}
+
+/* cookies, trays, plates */
+.ck{width:32px; height:32px; flex:none; display:block}
+.ck.sm{width:22px; height:22px}
+.ck.glow{animation:glow .9s ease-in-out infinite alternate}
+.stats{display:flex; gap:12px; margin-bottom:12px}
+.stat{flex:1; text-align:center; background:var(--sky-l); border:3px solid var(--ink); border-radius:14px; padding:4px 8px}
+.stat b{display:block; font-family:var(--f-display); font-size:36px; line-height:1.1}
+.stat span{font-size:14px; color:var(--ink2)}
+.tray{display:flex; flex-wrap:wrap; gap:5px; min-height:78px; padding:10px; background:var(--sun-l); border:3px dashed var(--ink); border-radius:16px; align-content:flex-start}
+.tray.empty::after{content:"الصينية فارغة"; color:var(--ink2); font-size:15px}
+.plates{display:flex; flex-wrap:wrap; justify-content:center; gap:26px 18px; min-height:20px; padding-bottom:12px}
+.plate{position:relative; width:104px; height:104px; border-radius:50%; background:#fff; border:3px solid var(--ink); box-shadow:inset 0 0 0 7px var(--sky-l); display:grid; place-items:center}
+.plate .cks{display:flex; flex-wrap:wrap; justify-content:center; gap:2px; width:76px}
+.plate .tag{position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); background:#fff; border:2.5px solid var(--ink); border-radius:12px; font-size:13px; padding:0 10px; white-space:nowrap; line-height:1.6}
+.plate.short{border-style:dashed; background:var(--coral-l); animation:shake .6s}
+.plate.short .tag{background:var(--coral)}
+.plate.pop{animation:pop .35s ease-out}
+
+/* equations */
+.leq{display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:10px}
+.leq .u{display:flex; flex-direction:column; align-items:center; gap:4px; max-width:104px}
+.leq .u small{font-size:13px; line-height:1.35; text-align:center; color:var(--ink2)}
+.leq .num{font-family:var(--f-display); font-weight:800; font-size:44px; line-height:1; min-width:58px; text-align:center; padding:8px 12px; border:3px solid var(--ink); border-radius:14px; background:#fff}
+.leq .num.n{background:var(--sky-l)} .leq .num.d{background:var(--grape-l)} .leq .num.q{background:var(--mint-l)} .leq .num.r{background:var(--coral-l)}
+.leq .op{font-family:var(--f-display); font-weight:800; font-size:36px; line-height:1; margin-top:12px}
+.leq .txt{font-family:var(--f-display); font-weight:700; font-size:22px; margin-top:16px}
+.leq.sm .num{font-size:30px; min-width:44px; padding:5px 9px}
+.leq.sm .op{font-size:26px; margin-top:8px} .leq.sm .txt{font-size:18px; margin-top:10px}
+.leq.pop{animation:pop .4s ease-out}
+
+/* chips (multiplication tables) */
+.chips{display:grid; grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); gap:10px}
+.chip{display:flex; flex-direction:column; align-items:center; padding:6px 4px 8px; border:3px solid var(--ink); border-radius:16px; background:#fff; cursor:pointer; box-shadow:0 4px 0 var(--ink)}
+.chip small{font-size:15px; color:var(--ink2); line-height:1.4}
+.chip b{font-family:var(--f-display); font-weight:800; font-size:32px; line-height:1.1}
+.chip:active:not(:disabled){transform:translateY(3px); box-shadow:0 1px 0 var(--ink)}
+.chip.over{background:var(--coral-l)} .chip.low{background:var(--sun-l)} .chip.ok{background:var(--mint)}
+.chip.hint{animation:pulse 1s ease-in-out infinite}
+.chip:disabled{cursor:default}
+.target{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-size:18px}
+.target b{font-family:var(--f-display); font-size:40px; line-height:1; padding:4px 16px; border:3px solid var(--ink); border-radius:14px; background:var(--sky-l)}
+.subrow{margin-top:14px; display:flex; justify-content:center; align-items:center; gap:10px; font-family:var(--f-display); font-weight:800; font-size:34px; animation:pop .4s ease-out}
+.subrow .res{padding:2px 14px; border:3px solid var(--ink); border-radius:14px; background:var(--coral-l)}
+
+/* rule cards */
+.rule{display:flex; gap:14px; align-items:center; background:var(--grape); color:#fff; border:3px solid var(--ink); border-radius:20px; padding:12px 16px; box-shadow:0 5px 0 var(--ink); animation:pop .45s ease-out}
+.rule svg{width:44px; height:44px; flex:none}
+.rule small{display:block; font-size:14px; color:#E7D9FF}
+.rule p{margin:0; font-family:var(--f-display); font-weight:700; font-size:22px; line-height:1.45}
+
+/* explorer */
+.row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px}
+.seg{display:flex; gap:8px}
+.segb{width:48px; height:48px; border-radius:50%; border:3px solid var(--ink); background:#fff; font-family:var(--f-display); font-weight:800; font-size:24px; cursor:pointer; padding:0; line-height:1}
+.segb[aria-pressed="true"]{background:var(--grape); color:#fff}
+.ctrl{justify-content:center; gap:18px; margin-bottom:6px}
+.stepbtn{width:58px; height:58px; border-radius:50%; border:3px solid var(--ink); background:var(--sun); font-family:var(--f-display); font-weight:800; font-size:36px; line-height:1; cursor:pointer; box-shadow:0 4px 0 var(--ink); padding:0 0 4px}
+.stepbtn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink)}
+.bign{text-align:center; min-width:120px}
+.bign b{display:block; font-family:var(--f-display); font-weight:800; font-size:56px; line-height:1}
+.bign span{font-size:15px; color:var(--ink2)}
+input[type=range]{width:100%; accent-color:var(--grape); height:34px}
+.groups{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:14px; min-height:40px}
+.grp{display:flex; gap:1px; padding:4px; border:2.5px solid var(--ink); border-radius:12px; background:var(--sky-l)}
+.grp.left{background:var(--coral-l); border-style:dashed}
+.meter{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px}
+.m{width:46px; height:46px; border-radius:50%; border:3px solid var(--ink); background:#fff; display:grid; place-items:center; font-family:var(--f-display); font-weight:800; font-size:22px; line-height:1}
+.m.on{background:var(--coral); transform:scale(1.18)}
+.m.no{background:#EEE; color:#8B8699; border-style:dashed; text-decoration:line-through}
+
+/* practice & machine */
+.big-eq{font-family:var(--f-display); font-weight:800; font-size:40px; text-align:center; line-height:1.3}
+.step{margin:0 0 10px; font-weight:600}
+.opts{display:flex; justify-content:center; gap:14px; flex-wrap:wrap}
+.opts .btn{min-width:84px; font-size:30px}
+.mrow{display:flex; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; border:3px solid var(--ink); border-radius:16px; background:#fff; animation:pop .35s ease-out}
+.mrow .lab{flex:none; width:96px; line-height:1.4}
+.mrow .ex{font-family:var(--f-display); font-weight:800; font-size:30px; line-height:1.3}
+.mrow.good{background:var(--mint-l)} .mrow.bad{background:var(--coral-l)}
+.verdict{font-family:var(--f-display); font-weight:700; font-size:20px; margin-inline-start:auto}
+.pips{display:flex; gap:8px; justify-content:center; margin-bottom:10px}
+.pip{width:14px; height:14px; border-radius:50%; border:2.5px solid var(--ink); background:#fff}
+.pip.on{background:var(--sun)} .pip.done{background:var(--mint)}
+.ngrid{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
+.nb{height:52px; border:3px solid var(--ink); border-radius:14px; background:#fff; font-family:var(--f-display); font-weight:800; font-size:24px; cursor:pointer; padding:0; box-shadow:0 3px 0 var(--ink)}
+.nb[aria-pressed="true"]{background:var(--sun)}
+.pairs{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:14px 0 8px}
+.pair{display:flex; gap:1px; padding:4px; border:2.5px solid var(--ink); border-radius:12px; background:var(--sky-l)}
+.pair.left{background:var(--coral-l); border-style:dashed}
+
+/* welcome & finale */
+.hello{text-align:center}
+.hello h1{margin:0 0 4px; font-family:var(--f-display); font-weight:800; font-size:38px; line-height:1.25; color:var(--grape)}
+.hello p{margin:0 0 14px; color:var(--ink2)}
+.namebox{display:flex; flex-direction:column; align-items:center; gap:6px; margin:16px 0 18px}
+.namebox input{font-family:var(--f-body); font-size:20px; width:min(320px,100%); padding:10px 14px; text-align:center; border:3px solid var(--ink); border-radius:14px; background:var(--sun-l)}
+.path{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:12px 0 0; padding:0; list-style:none}
+.path li{background:var(--sky-l); border:2.5px solid var(--ink); border-radius:12px; padding:0 12px; font-size:15px}
+.cert{text-align:center; background:#fff; border:4px double var(--ink); border-radius:24px; padding:22px 16px; box-shadow:0 6px 0 var(--ink)}
+.cert h2{margin:0; font-family:var(--f-display); font-weight:800; font-size:36px; color:var(--grape); line-height:1.3}
+.cert .who{display:inline-block; margin:8px 0 14px; padding:2px 22px; font-family:var(--f-display); font-weight:800; font-size:30px; background:var(--sun); border:3px solid var(--ink); border-radius:16px}
+.rules{display:flex; flex-direction:column; gap:10px; text-align:start; margin:6px 0 0; padding:0; list-style:none}
+.rules li{display:flex; gap:12px; align-items:center; background:var(--grape-l); border:3px solid var(--ink); border-radius:16px; padding:8px 14px}
+.rules li span{flex:none; width:36px; height:36px; border-radius:50%; background:var(--grape); color:#fff; display:grid; place-items:center; font-family:var(--f-display); font-weight:800}
+.conf{position:fixed; top:-20px; width:10px; height:14px; border-radius:2px; z-index:50; pointer-events:none; animation:fall 3.2s linear forwards}
+
+@keyframes pop{0%{transform:scale(.85)} 60%{transform:scale(1.06)} 100%{transform:scale(1)}}
+@keyframes bob{0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}}
+@keyframes pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.07)}}
+@keyframes glow{from{filter:drop-shadow(0 0 0 rgba(255,122,107,0))} to{filter:drop-shadow(0 0 7px #FF7A6B)}}
+@keyframes shake{0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg); opacity:.9}}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+@media (max-width:460px){
+  body{font-size:16px}
+  .mascot{width:72px}
+  .bubble{font-size:17px}
+  .brand{font-size:16px}
+  .dot{width:34px; height:34px; font-size:16px}
+  .dots{gap:6px}
+  .leq .num{font-size:36px; min-width:50px}
+  .hello h1{font-size:30px}
+  .mrow .lab{width:74px; font-size:14px}
+  .mrow .ex{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">باقي القسمة</div>
+    <div class="dots" id="dots" role="navigation" aria-label="محطات اللعبة"></div>
+    <button class="iconbtn" id="sndBtn" aria-pressed="true" aria-label="تشغيل أو إيقاف الأصوات">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+    </button>
+  </header>
+
+  <section class="guide" id="guide">
+    <svg id="mascot" class="mascot happy" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="45" fill="var(--cookie)" stroke="var(--ink)" stroke-width="4"/>
+      <ellipse cx="22" cy="30" rx="5" ry="4" fill="var(--choc)"/><ellipse cx="76" cy="24" rx="5" ry="4" fill="var(--choc)"/>
+      <ellipse cx="84" cy="56" rx="4" ry="5" fill="var(--choc)"/><ellipse cx="18" cy="68" rx="5" ry="4" fill="var(--choc)"/>
+      <ellipse cx="62" cy="86" rx="5" ry="3.5" fill="var(--choc)"/><ellipse cx="36" cy="88" rx="4" ry="3" fill="var(--choc)"/>
+      <ellipse cx="36" cy="46" rx="8" ry="9.5" fill="#fff" stroke="var(--ink)" stroke-width="3"/><circle cx="37" cy="47" r="4" fill="var(--ink)"/>
+      <ellipse cx="64" cy="46" rx="8" ry="9.5" fill="#fff" stroke="var(--ink)" stroke-width="3"/><circle cx="65" cy="47" r="4" fill="var(--ink)"/>
+      <ellipse cx="25" cy="62" rx="6" ry="4" fill="var(--coral)" opacity=".55"/><ellipse cx="75" cy="62" rx="6" ry="4" fill="var(--coral)" opacity=".55"/>
+      <path class="m-happy" d="M37 63 Q50 77 63 63" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round"/>
+      <ellipse class="m-wow" cx="50" cy="69" rx="7" ry="9" fill="var(--ink)"/>
+      <path class="m-think" d="M41 69 H59" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round"/>
+      <path class="brow" d="M27 31 Q36 25 45 32" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div class="bubble" id="bubble">
+      <div id="btext"></div>
+      <button class="iconbtn speak" id="speak" type="button" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+        استمعي
+      </button>
+    </div>
+  </section>
+
+  <main class="stage" id="stage"></main>
+
+  <footer class="foot" id="foot" hidden>
+    <button class="btn ghost" id="back" type="button">→ رجوع</button>
+    <button class="btn go" id="next" type="button" disabled>التالي ←</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const ar = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[+d]);
+const stage = $('#stage'), bubble = $('#bubble'), btext = $('#btext'), mascot = $('#mascot');
+const nextBtn = $('#next'), backBtn = $('#back'), foot = $('#foot'), guide = $('#guide');
+
+const S = { i:0, max:0, name:'', done:{}, tok:0, sound:true };
+try { S.name = localStorage.getItem('rem_name') || ''; } catch(e) {}
+const call = () => S.name ? 'يا ' + S.name : 'يا بطلة';
+const later = (fn, ms) => { const t = S.tok; setTimeout(() => { if (t === S.tok) fn(); }, ms); };
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(p => p[1]);
+const ordinal = ['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة'];
+
+/* ---------- sound & speech ---------- */
+let actx = null;
+function tone(seq){
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    let t = actx.currentTime;
+    seq.forEach(([f, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.14, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t); o.stop(t + d + 0.03);
+      t += d * 0.9;
+    });
+  } catch(e) {}
+}
+const sfx = {
+  pop:  () => tone([[520, .08]]),
+  good: () => tone([[523, .1], [659, .1], [784, .2]]),
+  soft: () => tone([[392, .12], [330, .18]]),
+  star: () => tone([[659, .1], [784, .1], [988, .1], [1319, .28]])
+};
+$('#sndBtn').addEventListener('click', e => {
+  S.sound = !S.sound;
+  e.currentTarget.setAttribute('aria-pressed', String(S.sound));
+});
+const canSpeak = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+if (canSpeak) $('#speak').hidden = false;
+$('#speak').addEventListener('click', () => {
+  if (!canSpeak) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(btext.textContent.replace(/\s+/g, ' '));
+    u.lang = 'ar-SA'; u.rate = 0.85;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+});
+
+/* ---------- guide ---------- */
+function say(html, mood){
+  btext.innerHTML = html;
+  mascot.setAttribute('class', 'mascot ' + (mood || 'happy'));
+  bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
+  if (canSpeak) { try { speechSynthesis.cancel(); } catch(e) {} }
+  const r = guide.getBoundingClientRect();
+  if (r.top < 40) guide.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ---------- shared pieces ---------- */
+const COOKIE = cls => `<svg class="ck ${cls||''}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="var(--cookie)" stroke="var(--ink)" stroke-width="2.6"/><circle cx="13" cy="14" r="2.5" fill="var(--choc)"/><circle cx="26" cy="12" r="2.3" fill="var(--choc)"/><circle cx="27" cy="25" r="2.7" fill="var(--choc)"/><circle cx="14" cy="26" r="2.4" fill="var(--choc)"/><circle cx="21" cy="19" r="1.9" fill="var(--choc)"/></svg>`;
+const cookies = (n, cls) => Array.from({length:n}, () => COOKIE(cls)).join('');
+const title = (n, t) => `<h2 class="st-title"><small>المحطة ${ar(n)}</small>${t}</h2>`;
+const STAR = `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 19l14-2z" fill="var(--sun)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/></svg>`;
+const ruleCard = (no, text) => `<div class="rule">${STAR}<div><small>القاعدة الذهبية ${ar(no)}</small><p>${text}</p></div></div>`;
+
+/* labeled equation: dividend ÷ divisor = quotient والباقي remainder */
+function leq(N, D, q, r, opts){
+  opts = opts || {};
+  const lab = (t) => opts.labels ? `<small>${t}</small>` : '';
+  return `<div class="leq ${opts.sm ? 'sm' : ''} ${opts.pop ? 'pop' : ''}" dir="rtl">
+    <div class="u"><span class="num n">${ar(N)}</span>${lab('المقسوم' + (opts.words ? '<br>' + opts.words[0] : ''))}</div>
+    <span class="op">÷</span>
+    <div class="u"><span class="num d">${ar(D)}</span>${lab('المقسوم عليه' + (opts.words ? '<br>' + opts.words[1] : ''))}</div>
+    <span class="op">=</span>
+    <div class="u"><span class="num q">${ar(q)}</span>${lab('خارج القسمة' + (opts.words ? '<br>' + opts.words[2] : ''))}</div>
+    <span class="txt">والباقي</span>
+    <div class="u"><span class="num r">${ar(r)}</span>${lab('الباقي' + (opts.words ? '<br>' + opts.words[3] : ''))}</div>
+  </div>`;
+}
+const chips = (D, max) => Array.from({length:max}, (_, i) => {
+  const k = i + 1, p = D * k;
+  return `<button class="chip" type="button" data-k="${k}" data-p="${p}"><small>${ar(D)} × ${ar(k)}</small><b>${ar(p)}</b></button>`;
+}).join('');
+/* 'over' = bigger than the number, 'low' = fits but not the closest, 'ok' = the closest that does not exceed it */
+const judge = (p, N, D) => p > N ? 'over' : (N - p >= D ? 'low' : 'ok');
+
+function unlock(){
+  if (S.done[S.i]) { nextBtn.disabled = false; return; }
+  S.done[S.i] = true;
+  nextBtn.disabled = false; nextBtn.classList.add('ready');
+  sfx.star(); drawDots();
+}
+
+/* ---------- navigation ---------- */
+const screens = [welcome, st1, st2, st3, st4, st5, finale];
+function drawDots(){
+  const box = $('#dots');
+  if (!box.children.length) {
+    for (let k = 1; k <= 5; k++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'dot'; b.textContent = ar(k); b.dataset.k = k;
+      b.setAttribute('aria-label', 'المحطة ' + ar(k));
+      b.addEventListener('click', () => show(k));
+      box.appendChild(b);
+    }
+  }
+  $$('.dot', box).forEach(b => {
+    const k = +b.dataset.k;
+    b.classList.toggle('cur', S.i === k);
+    b.classList.toggle('done', !!S.done[k]);
+    b.disabled = k > S.max;
+  });
+}
+function show(i){
+  S.tok++; S.i = i; S.max = Math.max(S.max, i);
+  try { speechSynthesis.cancel(); } catch(e) {}
+  stage.innerHTML = '';
+  nextBtn.classList.remove('ready');
+  nextBtn.disabled = !S.done[i];
+  nextBtn.textContent = i === 5 ? 'إلى الشهادة ←' : 'التالي ←';
+  foot.hidden = (i === 0 || i === 6);
+  backBtn.hidden = (i <= 1);
+  drawDots();
+  window.scrollTo({ top:0 });
+  screens[i]();
+  if (S.done[i]) nextBtn.classList.add('ready');
+}
+nextBtn.addEventListener('click', () => { if (!nextBtn.disabled) show(S.i + 1); });
+backBtn.addEventListener('click', () => show(S.i - 1));
+
+/* ---------- welcome ---------- */
+function welcome(){
+  say('أهلًا! أنا <b>بسكوتة</b>. سنتعلم معًا ماذا نفعل عندما نقسم ويبقى شيء. لا يوجد امتحان هنا، فقط لعب واكتشاف. كل ما عليك أن تجربي وتضغطي!', 'happy');
+  stage.innerHTML = `
+    <div class="panel hello">
+      <h1>لعبة باقي القسمة</h1>
+      <p>خمس محطات قصيرة نتعلم فيها كيف نقسم، وكيف نعرف الباقي، وكيف نتأكد من الإجابة.</p>
+      <div class="namebox">
+        <label for="nm" class="lab">ما اسمك؟ (اكتبيه إن أحببتِ)</label>
+        <input id="nm" type="text" maxlength="14" autocomplete="off" value="${S.name.replace(/"/g, '')}">
+      </div>
+      <button class="btn go ready" id="go" type="button">هيا نبدأ</button>
+      <ul class="path">
+        <li>١ وزّعي البسكويت</li><li>٢ جدول الضرب</li><li>٣ غيّري واكتشفي</li><li>٤ نحلّ معًا</li><li>٥ هل إجابتي صحيحة؟</li>
+      </ul>
+    </div>`;
+  const go = () => {
+    S.name = $('#nm').value.trim().replace(/[<>&"']/g, '');
+    try { localStorage.setItem('rem_name', S.name); } catch(e) {}
+    sfx.pop(); show(1);
+  };
+  $('#go').addEventListener('click', go);
+  $('#nm').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+}
+
+/* ---------- station 1: sharing cookies ---------- */
+function st1(){
+  const TOTAL = 14, PER = 3;
+  let left = TOTAL, plates = [], phase = 'give', busy = false;
+  stage.innerHTML = `${title(1, 'وزّعي البسكويت')}
+    <div class="panel">
+      <div class="stats">
+        <div class="stat"><b id="sLeft"></b><span>بسكويتة في الصينية</span></div>
+        <div class="stat"><b id="sFr"></b><span>صديقات أخذن ${ar(PER)} بسكويتات</span></div>
+      </div>
+      <div id="tray" class="tray" role="img" aria-label="صينية البسكويت"></div>
+    </div>
+    <div id="plates" class="plates"></div>
+    <div id="eqbox"></div>
+    <div class="actions"><button class="btn" id="act" type="button"></button></div>`;
+  const act = $('#act');
+  function draw(){
+    const full = plates.filter(p => !p.short).length;
+    $('#sLeft').textContent = ar(left);
+    $('#sFr').textContent = ar(full);
+    const tray = $('#tray');
+    tray.classList.toggle('empty', left === 0);
+    tray.innerHTML = cookies(left, phase === 'done' ? 'glow' : '');
+    $('#plates').innerHTML = plates.map((p, i) => `<div class="plate ${p.short ? 'short' : ''} ${p.fresh ? 'pop' : ''}"><div class="cks">${cookies(p.n)}</div><span class="tag">${p.short ? 'لا تكفي' : 'صديقة ' + ar(i + 1)}</span></div>`).join('');
+    plates.forEach(p => p.fresh = false);
+    act.textContent = phase === 'give' ? `أعطي ${ar(PER)} بسكويتات لصديقة` : phase === 'try' ? 'جرّبي إعطاء صديقة أخرى' : '';
+    act.hidden = phase === 'done';
+  }
+  say(`عندي ${ar(TOTAL)} بسكويتة، وأريد أن أعطي كل صديقة ${ar(PER)} بسكويتات. اضغطي على الزر لنوزّع واحدة بعد الأخرى، ولنرَ كم صديقة ستأخذ.`, 'happy');
+  draw();
+  act.addEventListener('click', () => {
+    if (busy) return;
+    if (phase === 'give') {
+      left -= PER; plates.push({ n:PER, fresh:true }); sfx.pop();
+      const k = plates.length;
+      if (left >= PER) {
+        say(`الصديقة ${ordinal[k - 1]} أخذت ${ar(PER)} بسكويتات. بقي في الصينية ${ar(left)}.`, 'happy');
+      } else {
+        phase = 'try';
+        say(`الصديقة ${ordinal[k - 1]} أخذت ${ar(PER)}. بقيت ${ar(left)} بسكويتتان فقط. هل تكفيان لصديقة أخرى؟ جرّبي!`, 'think');
+      }
+      draw();
+    } else if (phase === 'try') {
+      busy = true;
+      const held = left; left = 0;
+      plates.push({ n:held, short:true, fresh:true });
+      sfx.soft(); draw();
+      say(`انظري! الصديقة الأخيرة ستأخذ ${ar(held)} فقط، وهذا لا يكفي لأن كل صديقة تحتاج ${ar(PER)}. إذن لا نستطيع أن نكمل.`, 'wow');
+      later(() => {
+        plates = plates.filter(p => !p.short); left = held; phase = 'done'; busy = false;
+        draw();
+        $('#eqbox').innerHTML = `<div class="panel">${leq(TOTAL, PER, plates.length, left, { labels:true, pop:true, words:['البسكويت','في كل صديقة','عدد الصديقات','ما تبقّى'] })}</div>`;
+        say(`أحسنتِ ${call()}! وزّعنا ${ar(TOTAL)} بسكويتة على ${ar(plates.length)} صديقات، وتبقّت ${ar(left)} لا تكفيان لصديقة جديدة. هذه البسكويتات المتبقية اسمها <b>الباقي</b>. وهكذا نكتب القسمة: ${ar(TOTAL)} ÷ ${ar(PER)} = ${ar(plates.length)} والباقي ${ar(left)}.`, 'happy');
+        unlock();
+      }, 2300);
+    }
+  });
+}
+
+/* ---------- station 2: use the table, find Ayman's mistake ---------- */
+function st2(){
+  const N = 14, D = 3;
+  let wrong = 0, solved = false, sawOver = false;
+  stage.innerHTML = `${title(2, 'جدول الضرب يساعدنا')}
+    <div class="panel">
+      <div class="target"><span>جدول ضرب ${ar(D)} · نبحث عن أكبر ناتج لا يزيد عن</span><b>${ar(N)}</b></div>
+      <div class="chips" id="chips">${chips(D, 9)}</div>
+      <div id="after"></div>
+    </div>
+    <div id="rule"></div>`;
+  say(`في الكتاب، أيمن قسم ${ar(N)} ÷ ${ar(D)} وقال إن الناتج ${ar(5)} والباقي ${ar(1)}، لأنه اختار ${ar(D)} × ${ar(5)} = ${ar(15)}. لنكتشف الخطأ! اضغطي أولًا على <b>${ar(15)}</b>.`, 'think');
+  $$('.chip').forEach(c => c.addEventListener('click', () => {
+    if (solved) return;
+    const p = +c.dataset.p, k = +c.dataset.k, j = judge(p, N, D);
+    if (j === 'over') {
+      c.classList.add('over'); sfx.soft();
+      if (p === 15 && !sawOver) {
+        sawOver = true;
+        say(`${ar(15)} أكبر من ${ar(N)}! لنعطي ${ar(5)} صديقات نحتاج ${ar(15)} بسكويتة، وعندنا ${ar(N)} فقط. لذلك لا نستطيع أن نطرح ${ar(15)} − ${ar(N)}. هذا هو خطأ أيمن. الآن ابحثي عن ناتج <b>لا يزيد</b> عن ${ar(N)}، والأقرب إليه.`, 'wow');
+      } else {
+        say(`${ar(D)} × ${ar(k)} = ${ar(p)} أكبر من ${ar(N)}، ولا يكفي ما عندنا من بسكويت. اختاري ناتجًا أصغر.`, 'think');
+        wrong++;
+      }
+    } else if (j === 'low') {
+      c.classList.add('low'); sfx.soft(); wrong++;
+      say(`${ar(D)} × ${ar(k)} = ${ar(p)} لا يزيد عن ${ar(N)}، لكن لو توقفنا هنا لبقي ${ar(N - p)}، وهذا يكفي لمجموعة أخرى من ${ar(D)}! ابحثي عن ناتج أكبر، ما زال لا يزيد عن ${ar(N)}.`, 'think');
+    } else {
+      solved = true; c.classList.add('ok'); sfx.good();
+      $$('.chip').forEach(x => x.disabled = true);
+      $$('.chip').forEach(x => x.classList.remove('hint'));
+      const q = k, r = N - p;
+      $('#after').innerHTML = `<div class="subrow" dir="rtl"><span>${ar(N)}</span><span>−</span><span>${ar(p)}</span><span>=</span><span class="res">${ar(r)}</span></div>
+        <div style="margin-top:14px">${leq(N, D, q, r, { labels:true, pop:true })}</div>`;
+      $('#rule').innerHTML = ruleCard(1, 'نبحث في جدول الضرب عن أكبر ناتج لا يزيد عن العدد، ثم نطرح.');
+      say(`برافو ${call()}! ${ar(D)} × ${ar(k)} = ${ar(p)} هو أقرب ناتج لا يزيد عن ${ar(N)}. نطرح ${ar(N)} − ${ar(p)} = ${ar(r)}، فيكون الباقي ${ar(r)}، وخارج القسمة ${ar(q)} (رقم الضرب الذي اخترناه). إذن ${ar(N)} ÷ ${ar(D)} = ${ar(q)} والباقي ${ar(r)}.`, 'happy');
+      unlock();
+      return;
+    }
+    if (wrong >= 3) { const t = $(`.chip[data-p="12"]`); if (t) t.classList.add('hint'); }
+  }));
+}
+
+/* ---------- station 3: explore the remainder ---------- */
+function st3(){
+  let n = 14, d = 3, moves = 0, zeroSeen = false, unlocked = false;
+  const seenR = new Set();
+  stage.innerHTML = `${title(3, 'غيّري واكتشفي')}
+    <div class="panel">
+      <div class="row"><span class="lab">أقسم على:</span>
+        <div class="seg" id="dsel">${[2,3,4,5,6].map(x => `<button class="segb" type="button" data-d="${x}" aria-pressed="${x === d}">${ar(x)}</button>`).join('')}</div>
+      </div>
+      <div class="row ctrl">
+        <button class="stepbtn" id="plus" type="button" aria-label="أضيفي بسكويتة">+</button>
+        <div class="bign"><b id="nVal"></b><span>بسكويتة</span></div>
+        <button class="stepbtn" id="minus" type="button" aria-label="أنقصي بسكويتة">−</button>
+      </div>
+      <input id="rng" type="range" min="0" max="30" value="${n}" dir="ltr" aria-label="عدد البسكويت">
+    </div>
+    <div class="panel"><div id="groups" class="groups"></div><div id="eq3"></div></div>
+    <div class="panel">
+      <div class="lab center">الباقي عند القسمة على <b id="dd"></b> يمكن أن يكون أحد هذه الأعداد فقط:</div>
+      <div id="meter" class="meter"></div>
+      <p id="mnote" class="note"></p>
+    </div>
+    <div id="rule"></div>`;
+  say(`حرّكي عدد البسكويت بالأزرار أو بالمؤشر، وشاهدي ماذا يحدث للباقي. هل يمكن أن يصبح الباقي ${ar(3)} عندما نقسم على ${ar(3)}؟`, 'think');
+  function upd(user){
+    const q = Math.floor(n / d), r = n % d;
+    $('#nVal').textContent = ar(n); $('#dd').textContent = ar(d); $('#rng').value = n;
+    $$('#dsel .segb').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.d === d)));
+    $('#groups').innerHTML = (n === 0 ? '<span class="lab">لا توجد بسكويتات</span>' : '') +
+      Array.from({length:q}, () => `<div class="grp">${cookies(d, 'sm')}</div>`).join('') +
+      (r > 0 ? `<div class="grp left">${cookies(r, 'sm glow')}</div>` : '');
+    $('#eq3').innerHTML = leq(n, d, q, r, { sm:true });
+    $('#meter').innerHTML = Array.from({length:d}, (_, i) => `<div class="m ${i === r ? 'on' : ''}">${ar(i)}</div>`).join('') + `<div class="m no" title="لا يمكن">${ar(d)}</div>`;
+    $('#mnote').innerHTML = r === 0
+      ? (n === 0 ? 'لا يوجد بسكويت، فلا يوجد باقي.' : `الباقي ${ar(0)}: القسمة تامة، ولا يتبقى شيء!`)
+      : `الباقي ${ar(r)} أصغر من ${ar(d)}. ولا يمكن أن يساوي ${ar(d)}، لأن ${ar(d)} بسكويتات تكفي لمجموعة جديدة.`;
+    if (!user) return;
+    moves++; seenR.add(r); sfx.pop();
+    if (r === 0 && n > 0 && !zeroSeen) {
+      zeroSeen = true;
+      say(`رائع! ${ar(n)} ÷ ${ar(d)} لا يترك باقيًا. هذا معناه أن ${ar(n)} موجودة في جدول ضرب ${ar(d)}.`, 'wow');
+    } else if (moves === 1) {
+      say('جميل! استمري في التحريك، وانظري إلى الدوائر الملونة في الأسفل: الباقي يظهر دائمًا في واحدة منها.', 'happy');
+    }
+    if (!unlocked && moves >= 5 && seenR.size >= 2) {
+      unlocked = true;
+      $('#rule').innerHTML = ruleCard(2, 'الباقي دائمًا أصغر من المقسوم عليه.');
+      say(`لاحظتِ ${call()}! مهما غيّرنا العدد، يبقى الباقي أصغر من المقسوم عليه. ولو أصبح مثله أو أكبر، نعطي مجموعة أخرى.`, 'happy');
+      unlock();
+    }
+  }
+  $('#plus').addEventListener('click', () => { if (n < 30) { n++; upd(true); } });
+  $('#minus').addEventListener('click', () => { if (n > 0) { n--; upd(true); } });
+  $('#rng').addEventListener('input', e => { n = +e.target.value; upd(true); });
+  $$('#dsel .segb').forEach(b => b.addEventListener('click', () => { d = +b.dataset.d; upd(true); }));
+  upd(false);
+}
+
+/* ---------- station 4: solve together ---------- */
+function st4(){
+  const probs = [[17, 4], [23, 3], [35, 6]];
+  let pi = 0;
+  function run(){
+    const [N, D] = probs[pi];
+    const q0 = Math.floor(N / D), r0 = N % D, best = D * q0;
+    let step = 'pick', wrong = 0, wrongSub = 0;
+    stage.innerHTML = `${title(4, 'نحلّ معًا')}
+      <div class="pips" aria-label="المسألة ${ar(pi + 1)} من ${ar(probs.length)}">${probs.map((_, k) => `<span class="pip ${k < pi ? 'done' : k === pi ? 'on' : ''}"></span>`).join('')}</div>
+      <div class="panel"><div class="big-eq" dir="rtl">${ar(N)} ÷ ${ar(D)} = ؟</div></div>
+      <div class="panel" id="s1">
+        <p class="step">١) في جدول ضرب ${ar(D)}، اختاري أكبر ناتج لا يزيد عن ${ar(N)}</p>
+        <div class="chips" id="chips">${chips(D, 9)}</div>
+      </div>
+      <div class="panel" id="s2" hidden></div>
+      <div class="panel" id="s3" hidden></div>
+      <div class="actions" id="nx"></div>`;
+    say(pi === 0
+      ? `هيا نحل معًا ${ar(N)} ÷ ${ar(D)}. افتحي جدول ضرب ${ar(D)} بعينيك، وابحثي عن أكبر ناتج لا يزيد عن ${ar(N)}.`
+      : `مسألة جديدة: ${ar(N)} ÷ ${ar(D)}. الخطوات نفسها: جدول الضرب أولًا.`, 'think');
+    $$('.chip').forEach(c => c.addEventListener('click', () => {
+      if (step !== 'pick') return;
+      const p = +c.dataset.p, k = +c.dataset.k, j = judge(p, N, D);
+      if (j === 'over') {
+        c.classList.add('over'); wrong++; sfx.soft();
+        say(`${ar(D)} × ${ar(k)} = ${ar(p)} أكبر من ${ar(N)}. نحتاج ناتجًا لا يزيد عن ${ar(N)}.`, 'think');
+      } else if (j === 'low') {
+        c.classList.add('low'); wrong++; sfx.soft();
+        say(`${ar(p)} يناسب، لكن يتبقى ${ar(N - p)} وهذا يكفي لمجموعة أخرى من ${ar(D)}. جرّبي ناتجًا أكبر لا يزيد عن ${ar(N)}.`, 'think');
+      } else { pickDone(c); return; }
+      if (wrong >= 2) { const t = $(`.chip[data-p="${best}"]`); if (t) t.classList.add('hint'); }
+    }));
+    function pickDone(c){
+      step = 'sub'; sfx.good();
+      $$('.chip').forEach(x => { x.disabled = true; x.classList.remove('hint'); });
+      c.classList.add('ok');
+      const opts = shuffle([...new Set([r0, r0 + 1, r0 > 0 ? r0 - 1 : r0 + 2])]);
+      const s2 = $('#s2'); s2.hidden = false;
+      s2.innerHTML = `<p class="step">٢) نطرح: كم يتبقى بعد ${ar(best)}؟</p>
+        <div class="big-eq" dir="rtl" style="margin-bottom:12px">${ar(N)} − ${ar(best)} = ؟</div>
+        <div class="opts" id="opts">${opts.map(o => `<button class="btn" type="button" data-o="${o}">${ar(o)}</button>`).join('')}</div>`;
+      say(`ممتاز! ${ar(D)} × ${ar(q0)} = ${ar(best)} هو الأقرب. الآن نعرف كم بسكويتة بقيت: نطرح ${ar(best)} من ${ar(N)}.`, 'happy');
+      $$('#opts .btn').forEach(b => b.addEventListener('click', () => {
+        if (step !== 'sub') return;
+        const o = +b.dataset.o;
+        if (o === r0) { subDone(b); }
+        else {
+          wrongSub++; b.disabled = true; sfx.soft();
+          if (wrongSub >= 2) { const g = $(`#opts .btn[data-o="${r0}"]`); subDone(g); }
+          else say(`جرّبي مرة أخرى. عدّي معي من ${ar(best)} حتى نصل إلى ${ar(N)}: كم خطوة تحتاجين؟`, 'think');
+        }
+      }));
+    }
+    function subDone(b){
+      step = 'done'; sfx.good();
+      $$('#opts .btn').forEach(x => x.disabled = true);
+      b.style.background = 'var(--mint)';
+      const s3 = $('#s3'); s3.hidden = false;
+      s3.innerHTML = `<p class="step">٣) نكتب الجواب</p>${leq(N, D, q0, r0, { labels:true, pop:true })}
+        <p class="note">خارج القسمة ${ar(q0)} هو رقم الضرب الذي اخترناه، والباقي ${ar(r0)} أصغر من ${ar(D)} ✓</p>`;
+      say(`أحسنتِ ${call()}! ${ar(N)} ÷ ${ar(D)} = ${ar(q0)} والباقي ${ar(r0)}. لاحظي أن الباقي ${ar(r0)} أصغر من ${ar(D)}، كما تعلمنا.`, 'happy');
+      if (pi < probs.length - 1) {
+        $('#nx').innerHTML = '<button class="btn go ready" id="nextp" type="button">المسألة التالية ←</button>';
+        $('#nextp').addEventListener('click', () => { pi++; run(); window.scrollTo({ top:0 }); });
+      } else {
+        unlock();
+      }
+    }
+  }
+  run();
+}
+
+/* ---------- station 5: check the answer ---------- */
+function st5(){
+  const N = 31;
+  const stm = [{d:6, q:5, r:1}, {d:5, q:4, r:1}, {d:4, q:7, r:3}, {d:3, q:9, r:1}];
+  let si = 0, parity = { even:0, odd:0 }, picked = new Set(), auto = false;
+  stage.innerHTML = `${title(5, 'هل إجابتي صحيحة؟')}
+    <div id="rule"></div>
+    <div id="area" class="stage"></div>`;
+  $('#rule').innerHTML = ruleCard(3, 'للتأكد: المقسوم عليه × خارج القسمة + الباقي = المقسوم.');
+  function stmt(){
+    const s = stm[si], prod = s.d * s.q, sum = prod + s.r, ok = sum === N;
+    const cq = Math.floor(N / s.d), cr = N % s.d;
+    auto = si > 0;
+    $('#area').innerHTML = `
+      <div class="pips">${stm.map((_, k) => `<span class="pip ${k < si ? 'done' : k === si ? 'on' : ''}"></span>`).join('')}</div>
+      <div class="panel">
+        <p class="lab center" style="margin:0">أحدهم قال إن:</p>
+        <div class="big-eq" dir="rtl">${ar(N)} ÷ ${ar(s.d)} = ${ar(s.q)} والباقي ${ar(s.r)}</div>
+        <p class="note">هل هذا صحيح؟ نسأل آلة التحقق!</p>
+      </div>
+      <div id="mach"></div>
+      <div class="actions"><button class="btn" id="mb" type="button"></button></div>`;
+    const rows = [
+      `<div class="mrow"><span class="lab">اضربي</span><span class="ex" dir="rtl">${ar(s.d)} × ${ar(s.q)} = ${ar(prod)}</span></div>`,
+      `<div class="mrow"><span class="lab">أضيفي الباقي</span><span class="ex" dir="rtl">${ar(prod)} + ${ar(s.r)} = ${ar(sum)}</span></div>`,
+      `<div class="mrow ${ok ? 'good' : 'bad'}"><span class="lab">قارني</span><span class="ex" dir="rtl">${ar(sum)} ${ok ? '=' : '≠'} ${ar(N)}</span><span class="verdict">${ok ? 'صحيحة ✓' : 'ليست صحيحة ✗'}</span></div>`
+    ];
+    const labels = [`١) اضربي ${ar(s.d)} × ${ar(s.q)}`, `٢) أضيفي الباقي ${ar(s.r)}`, `٣) قارني مع ${ar(N)}`];
+    let shown = 0;
+    const mb = $('#mb'), mach = $('#mach');
+    function reveal(){
+      mach.insertAdjacentHTML('beforeend', rows[shown]); shown++; sfx.pop();
+      if (shown === 1) say(`${ar(s.d)} × ${ar(s.q)} = ${ar(prod)}. هذا عدد البسكويت في المجموعات الكاملة.`, 'think');
+      if (shown === 2) say(`ثم نضيف الباقي ${ar(s.r)} فنحصل على ${ar(sum)}. يجب أن نعود إلى العدد الأصلي ${ar(N)} إذا كانت الإجابة صحيحة.`, 'think');
+      if (shown === 3) verdict();
+    }
+    function verdict(){
+      mb.hidden = true;
+      if (ok) {
+        sfx.good();
+        say(`${ar(sum)} = ${ar(N)}، إذن الإجابة <b>صحيحة</b> ✓ ممتاز! ${ar(N)} ÷ ${ar(s.d)} = ${ar(s.q)} والباقي ${ar(s.r)}.`, 'happy');
+      } else {
+        sfx.soft();
+        mach.insertAdjacentHTML('beforeend', `<div class="panel">
+          <p class="lab center" style="margin:0 0 8px">الجواب الصحيح</p>${leq(N, s.d, cq, cr, { sm:true })}
+          <p class="note">لأن ${ar(s.d)} × ${ar(cq)} = ${ar(s.d * cq)}، ثم ${ar(s.d * cq)} + ${ar(cr)} = ${ar(N)} ✓</p></div>`);
+        say(`${ar(sum)} لا يساوي ${ar(N)}، إذن الإجابة <b>ليست صحيحة</b>. لا بأس! الآلة ساعدتنا لنكتشف ذلك. الجواب الصحيح: ${ar(N)} ÷ ${ar(s.d)} = ${ar(cq)} والباقي ${ar(cr)}.`, 'wow');
+      }
+      const nx = document.createElement('div'); nx.className = 'actions';
+      nx.innerHTML = `<button class="btn go ready" type="button">${si < stm.length - 1 ? 'الجملة التالية ←' : 'جملة أخيرة ←'}</button>`;
+      mach.after(nx);
+      nx.firstChild.addEventListener('click', () => { si++; si < stm.length ? stmt() : parityPart(); window.scrollTo({ top:0 }); });
+    }
+    if (!auto) {
+      say(`لنتأكد: نستعمل القاعدة. اضغطي على الزر لنختبر الإجابة خطوة بخطوة.`, 'think');
+      mb.textContent = labels[0];
+      mb.addEventListener('click', () => { reveal(); if (shown < 3) mb.textContent = labels[shown]; });
+    } else {
+      say('جملة جديدة! هذه المرة تعمل الآلة كلها بضغطة واحدة.', 'think');
+      mb.textContent = 'شغّلي الآلة';
+      mb.addEventListener('click', () => {
+        mb.disabled = true;
+        reveal(); later(reveal, 900); later(reveal, 1800);
+      });
+    }
+  }
+  function parityPart(){
+    $('#area').innerHTML = `
+      <div class="panel">
+        <p class="step" style="margin:0 0 8px">الجملة الأخيرة في الكتاب: «عند قسمة عدد على ${ar(2)} فإن الباقي ${ar(1)}». هل هذا صحيح دائمًا؟</p>
+        <p class="lab" style="margin:0 0 10px">اضغطي على أعداد مختلفة لنقسمها على ${ar(2)}:</p>
+        <div class="ngrid" id="ng">${Array.from({length:12}, (_, i) => `<button class="nb" type="button" data-n="${i + 1}" aria-pressed="false">${ar(i + 1)}</button>`).join('')}</div>
+        <div id="pv"></div>
+      </div>
+      <div id="concl"></div>`;
+    say(`هل الباقي عند القسمة على ${ar(2)} يكون ${ar(1)} دائمًا؟ جرّبي أعدادًا كثيرة، وانظري كيف تتوزع البسكويتات في أزواج.`, 'think');
+    $$('#ng .nb').forEach(b => b.addEventListener('click', () => {
+      const n = +b.dataset.n, q = Math.floor(n / 2), r = n % 2;
+      $$('#ng .nb').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      sfx.pop();
+      if (!picked.has(n)) { picked.add(n); if (r === 0) parity.even++; else parity.odd++; }
+      $('#pv').innerHTML = `<div class="pairs">${Array.from({length:q}, () => `<div class="pair">${cookies(2, 'sm')}</div>`).join('')}${r ? `<div class="pair left">${cookies(1, 'sm glow')}</div>` : ''}</div>
+        <div class="big-eq" style="font-size:30px" dir="rtl">${ar(n)} ÷ ${ar(2)} = ${ar(q)} والباقي ${ar(r)}</div>`;
+      say(r === 0
+        ? `${ar(n)} تتوزع كلها في أزواج، ولا يبقى شيء. الباقي ${ar(0)}.`
+        : `${ar(n)} تتوزع في أزواج وتبقى بسكويتة واحدة. الباقي ${ar(1)}.`, r === 0 ? 'wow' : 'happy');
+      if (parity.even >= 1 && parity.odd >= 1 && !$('#concl').innerHTML) {
+        $('#concl').innerHTML = `<div class="panel"><p class="step" style="margin:0">عند القسمة على ${ar(2)} يكون الباقي ${ar(0)} أو ${ar(1)} فقط.
+          الباقي ${ar(1)} يظهر مع الأعداد الفردية، والباقي ${ar(0)} مع الأعداد الزوجية. لذلك الجملة صحيحة للأعداد الفردية فقط، وليست صحيحة دائمًا.</p></div>`;
+        later(() => say(`اكتشفتِ السر ${call()}! الباقي عند القسمة على ${ar(2)} إما ${ar(0)} وإما ${ar(1)}. فالجملة صحيحة للأعداد الفردية فقط.`, 'happy'), 1600);
+        unlock();
+      }
+    }));
+  }
+  stmt();
+}
+
+/* ---------- finale ---------- */
+function finale(){
+  S.max = 6;
+  say(`مبروك ${call()}! أنهيتِ كل المحطات. أنتِ الآن بطلة الباقي! هذه شهادتك مع القواعد الذهبية الثلاث.`, 'wow');
+  stage.innerHTML = `<div class="cert">
+      <h2>شهادة بطلة الباقي</h2>
+      <p class="lab" style="margin:6px 0 0">تُمنح هذه الشهادة إلى</p>
+      <div class="who">${(S.name || 'البطلة').replace(/</g, '')}</div>
+      <p style="margin:0 0 12px">لأنها تعلمت كيف تقسم مع الباقي وكيف تتأكد من الجواب.</p>
+      <ol class="rules">
+        <li><span>١</span>نبحث في جدول الضرب عن أكبر ناتج لا يزيد عن العدد.</li>
+        <li><span>٢</span>الباقي دائمًا أصغر من المقسوم عليه.</li>
+        <li><span>٣</span>للتأكد: المقسوم عليه × خارج القسمة + الباقي = المقسوم.</li>
+      </ol>
+    </div>
+    <div class="actions">
+      <button class="btn" id="again" type="button">نلعب من جديد</button>
+      <button class="btn ghost" id="to4" type="button">نتدرب مرة أخرى على الحل</button>
+    </div>`;
+  $('#again').addEventListener('click', () => { S.done = {}; S.max = 1; show(1); });
+  $('#to4').addEventListener('click', () => show(4));
+  sfx.star();
+  const colors = ['#FFC63D', '#38D39F', '#FF7A6B', '#6B3FA0', '#4DA3FF'];
+  for (let k = 0; k < 44; k++) {
+    const c = document.createElement('i'); c.className = 'conf';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[k % colors.length];
+    c.style.animationDelay = (Math.random() * 0.8) + 's';
+    c.style.animationDuration = (2.4 + Math.random() * 1.6) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5000);
+  }
+}
+
+drawDots();
+show(0);
+})();
+</script>
+</body>
+</html>
